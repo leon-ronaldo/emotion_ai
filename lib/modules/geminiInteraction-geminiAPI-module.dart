@@ -4,7 +4,6 @@ import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:http/http.dart' as http;
 
 class GeminiInteraction {
-  late GenerativeModel model;
   bool geminiIsReady = false;
 
   GeminiInteraction() {
