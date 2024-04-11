@@ -1,12 +1,30 @@
+import 'package:emotion_ai/modules/geminiInteraction-geminiAPI-module.dart';
+import 'package:emotion_ai/modules/textToSpeech-cloudTextToSpeech-module.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class HomeController extends GetxController {
-  //TODO: Implement HomeController
+  double screenHeight = 0, screenWidth = 0;
 
-  final count = 0.obs;
+  late GeminiInteraction geminiAPI;
+  late TextToSpeechEngine speechEngine;
+  late TextEditingController requestFieldController;
+
+  Rx<String> responseText = ''.obs;
+  Rx<bool> screenReady = false.obs, fetchingResponse = false.obs;
+
   @override
   void onInit() {
     super.onInit();
+
+    screenHeight = Get.context!.height;
+    screenWidth = Get.context!.width;
+
+    geminiAPI = GeminiInteraction();
+    speechEngine = TextToSpeechEngine();
+    requestFieldController = TextEditingController();
+
+    screenReady.value = geminiAPI.geminiIsReady && speechEngine.speechToTextIsReady;
   }
 
   @override
@@ -18,6 +36,4 @@ class HomeController extends GetxController {
   void onClose() {
     super.onClose();
   }
-
-  void increment() => count.value++;
 }
