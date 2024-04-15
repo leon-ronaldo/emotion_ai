@@ -69,7 +69,7 @@ class HomeView extends GetView<HomeController> {
                                     const Text('Fetching response...'),
                                   ],
                                 )
-                              : Text(controller.conversationGenerator.speechRecognition.result.value),
+                              : Text(controller.responseText.value),
                         ],
                       ),
                     ),
