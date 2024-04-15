@@ -1,5 +1,5 @@
-import 'flutter/material.dart';
-import 'flutter_blue/flutter_blue.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_blue/flutter_blue.dart';
 
 void main() {
   runApp(MyApp());
@@ -25,7 +25,7 @@ class SmartwatchDataPage extends StatefulWidget {
 
 class _SmartwatchDataPageState extends State<SmartwatchDataPage> {
   FlutterBlue flutterBlue = FlutterBlue.instance;
-  BluetoothDevice connectedDevice;
+  late BluetoothDevice connectedDevice;
   bool isScanning = false;
   bool isConnected = false;
   List<int> heartRateData = [];
@@ -105,8 +105,6 @@ class _SmartwatchDataPageState extends State<SmartwatchDataPage> {
   void dispose() {
     super.dispose();
     flutterBlue.stopScan();
-    if (connectedDevice != null) {
-      connectedDevice.disconnect();
+    connectedDevice.disconnect();
     }
-  }
 }

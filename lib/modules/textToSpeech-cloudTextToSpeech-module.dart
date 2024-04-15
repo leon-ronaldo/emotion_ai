@@ -1,12 +1,13 @@
 import 'package:flutter_tts/flutter_tts.dart';
 
-void main() {
-  TextToSpeech object = TextToSpeech();
-  object.speak('hello world');
-}
+class TextToSpeechEngine {
+  late FlutterTts flutterTts;
+  bool speechToTextIsReady = false;
 
-class TextToSpeech {
-  FlutterTts flutterTts = FlutterTts();
+  TextToSpeechEngine() {
+    flutterTts = FlutterTts();
+    speechToTextIsReady = true;
+  }
 
   Future<void> speak(String text) async {
     await flutterTts.setLanguage("en-US");

@@ -24,17 +24,7 @@ class Event {
       );
 }
 
-Future<void> main() async {
-  final events = <Event>[]; // Initialize events list
-
-  // Load events from SharedPreferences
-  final loadedEvents = await loadEvents();
-
-  if (loadedEvents != null) {
-    events.addAll(loadedEvents);
-  }
-
-  // Function to get user input for a new event
+class EventManager {
   Event getUserEvent() {
     while (true) {
       print("Enter event title:");
@@ -45,7 +35,8 @@ Future<void> main() async {
       try {
         final DateTime date = DateTime.parse(dateString!);
         print("Enter optional event description:");
-        final description = stdin.readLineSync(); // No need for explicit encoding
+        final description =
+            stdin.readLineSync(); // No need for explicit encoding
         return Event(date, title!, description: description);
       } on FormatException {
         print("Invalid date format. Please try again (YYYY-MM-DD).");
@@ -76,22 +67,39 @@ Future<void> main() async {
     }
   }
 
-  // Get user input for a new event with error handling for invalid date
-  final newEvent = getUserEvent();
-  events.add(newEvent);
-
-  // Save events back to SharedPreferences
-  await saveEvents(events);
-
-  // Function to display events on a specific date (replace with your UI logic)
-  void showEventsByDate(DateTime date) {
-    final matchingEvents = events.where((event) =>
-        event.date.year == date.year &&
-        event.date.month == date.month &&
-        event.date.day == date.day).toList();
+  void showEventsByDate(DateTime date, List<Event> events) {
+    final matchingEvents = events
+        .where((event) =>
+            event.date.year == date.year &&
+            event.date.month == date.month &&
+            event.date.day == date.day)
+        .toList();
     print("Events on ${date.toString()}:");
     for (var event in matchingEvents) {
       print("- ${event.title}");
       if (event.description != null) {
         print("  Description: ${event.description}");
       }
+    }
+  }
+}
+
+Future<void> main() async {
+  final events = <Event>[]; // Initialize events list
+
+  EventManager eventManager = EventManager();
+
+  // Load events from SharedPreferences
+  final loadedEvents = await eventManager.loadEvents();
+
+  events.addAll(loadedEvents);
+
+  // Function to get user input for a new event
+
+  // Get user input for a new event with error handling for invalid date
+  final newEvent = eventManager.getUserEvent();
+  events.add(newEvent);
+
+  // Save events back to SharedPreferences
+  await eventManager.saveEvents(events);
+}
