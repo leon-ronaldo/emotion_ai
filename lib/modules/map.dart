@@ -59,7 +59,7 @@ class _GeolocationDemoState extends State<GeolocationDemo> {
         setState(() {
           _result = 'Latitude: $latitude\nLongitude: $longitude';
         });
-      } else {
+      } else
         setState(() {
           _result = 'Location not found!';
         });
