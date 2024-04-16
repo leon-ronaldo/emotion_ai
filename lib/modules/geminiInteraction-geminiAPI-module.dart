@@ -1,20 +1,10 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:google_generative_ai/google_generative_ai.dart';
+ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class GeminiInteraction {
   bool geminiIsReady = false;
 
   GeminiInteraction() {
-    /*final apiKey =
-        Platform.environment['AIzaSyAy6l8CZxcOGZRqLaB1iVwL4aPZiLg8PKc'];
-    if (apiKey == null) {
-      print('No \$API_KEY environment variable');
-      exit(1);
-    }
-
-    model = GenerativeModel(model: 'gemini-pro', apiKey: apiKey);*/
     geminiIsReady = true;
   }
 
@@ -33,7 +23,7 @@ class GeminiInteraction {
 
     final response = await http.post(
         Uri.parse(
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyAy6l8CZxcOGZRqLaB1iVwL4aPZiLg8PKc'),
+            'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=AIzaSyAOZmLW1t75VFsI4zF1FHUTAEqavtxqi0U'),
         headers: {'Content-Type': 'application/json'},
         body: body);
 

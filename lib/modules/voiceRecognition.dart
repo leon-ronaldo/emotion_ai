@@ -1,69 +1,88 @@
-import 'package:flutter/material.dart';
-import 'package:speech_to_text/speech_to_text.dart' as stt;
+import 'dart:async';
 
-void main(List<String> args) {
-  runApp(MyApp());
-}
+import 'package:emotion_ai/modules/conversationGenerator-gemini-module.dart';
+import 'package:get/get.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+import 'package:speech_to_text/speech_recognition_error.dart';
+import 'package:speech_to_text/speech_recognition_result.dart';
+import 'dart:async';
+import 'dart:isolate';
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class SpeechRecognition {
+  late SpeechToText speechRecognitionEngine;
+  late ConversationGenerator conversationGenerator;
 
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
+  Isolate? recognitionIsolate;
+  Isolate? keywordIsolate;
+  ReceivePort? recognitionReceivePort;
+  ReceivePort? keywordReceivePort;
 
-class _MyAppState extends State<MyApp> {
-    @override
-  void initState() {
-    super.initState();
+  bool speechEnabled = false;
+  bool speechAvailable = false;
+  bool isReady = false;
+
+  String lastWords = '';
+
+  Rx<String> result = ''.obs;
+
+  SpeechRecognition() {
+    speechRecognitionEngine = SpeechToText();
+    conversationGenerator = ConversationGenerator();
   }
 
-  void _listen() async {
-    if (!_isListening) {
-      bool available = await _speech.initialize(
-        onStatus: (val) => print('onStatus: $val'),
-        onError: (val) => print('onError: $val'),
-      );
-      if (available) {
-        setState(() => _isListening = true);
-        _speech.listen(listenFor: const Duration(minutes: 2),
-          onResult: (val) => setState(() {
-            _text = val.recognizedWords;
-            print(_text);
-            if (val.hasConfidenceRating && val.confidence > 0) {
-              _confidence = val.confidence;
-            }
-          }),
-        );
-      }
-    } else {
-      setState(() => _isListening = false);
-      _speech.stop();
+  void errorListener(SpeechRecognitionError error) {
+    print(error.errorMsg.toString());
+  }
+
+  void statusListener(String status) async {
+    print("status $status");
+    if (status == "done" && speechEnabled) {
+      lastWords += " ${result.value}";
+      result.value = "";
+      speechEnabled = false;
+      await startListening();
     }
   }
 
-  stt.SpeechToText _speech = stt.SpeechToText();
-  bool _isListening = false;
-  String _text = 'Press the button and start speaking';
-  double _confidence = 1.0;
+  Future initSpeech() async {
+    speechAvailable = await speechRecognitionEngine.initialize(
+        onError: errorListener, onStatus: statusListener);
+    isReady = true;
+  }
 
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        body: Container(
-          height: double.infinity,
-          width: double.infinity,
-        
-          child: Column(
-            children: [
-              ElevatedButton(onPressed: () => _listen(), child: Text('Recognize')),
-              Text(_text),
-              Text('Confidence : $_confidence')
-            ],
-          ),
-        ),
-      ),
+  void onSpeechResult(SpeechRecognitionResult recognitionResult) async {
+    print(recognitionResult.recognizedWords);
+    result.value = 'user : ${recognitionResult.recognizedWords}';
+    await conversationGenerator
+        .detectSpeechContext(recognitionResult.recognizedWords);
+  }
+
+  Future startListening() async {
+    await stopListening();
+    await Future.delayed(const Duration(seconds: 2));
+    await speechRecognitionEngine.listen(
+      onResult: onSpeechResult,
+      listenFor: const Duration(seconds: 60),
+      pauseFor: const Duration(seconds: 5),
+      listenOptions: SpeechListenOptions(sampleRate: 16000),
     );
+    speechEnabled = true;
+  }
+
+  Future startListeningForQuestion() async {
+    String result = "";
+    await speechRecognitionEngine.listen(
+      onResult: (recognitionResult) =>
+          result = recognitionResult.recognizedWords,
+      listenFor: const Duration(seconds: 60),
+      pauseFor: const Duration(seconds: 5),
+      listenOptions: SpeechListenOptions(sampleRate: 16000),
+    );
+    return result;
+  }
+
+  Future stopListening() async {
+    speechEnabled = false;
+    await speechRecognitionEngine.stop();
   }
 }
