@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "880275025577",
+    "project_id": "ardourai",
+    "storage_bucket": "ardourai.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:880275025577:android:532a298c8a50db7106c3b8",
+        "android_client_info": {
+          "package_name": "emotion.ai.emotion_ai"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC3Qnd_w194beozCEtknSY1aqKtkRz4zRA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

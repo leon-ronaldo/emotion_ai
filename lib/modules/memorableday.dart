@@ -1,105 +1,112 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class Event {
-  final DateTime date;
-  final String title;
-  final String? description;
-
-  Event(this.date, this.title, {this.description});
-
-  // Convert Event to a Map for JSON encoding
-  Map<String, dynamic> toJson() => {
-        'date': date.toString(),
-        'title': title,
-        'description': description,
-      };
-
-  // Factory constructor to create Event from a Map (for JSON decoding)
-  factory Event.fromJson(Map<String, dynamic> json) => Event(
-        DateTime.parse(json['date'] as String),
-        json['title'] as String,
-        description: json['description'] as String?,
-      );
+void main() {
+  runApp(MyApp());
 }
 
-class EventManager {
-  Event getUserEvent() {
-    while (true) {
-      print("Enter event title:");
-      final title = stdin.readLineSync(); // No need for explicit encoding
-
-      print("Enter event date (YYYY-MM-DD):");
-      final dateString = stdin.readLineSync(); // No need for explicit encoding
-      try {
-        final DateTime date = DateTime.parse(dateString!);
-        print("Enter optional event description:");
-        final description =
-            stdin.readLineSync(); // No need for explicit encoding
-        return Event(date, title!, description: description);
-      } on FormatException {
-        print("Invalid date format. Please try again (YYYY-MM-DD).");
-      }
-    }
-  }
-
-  // Function to save events to SharedPreferences
-  Future<void> saveEvents(List<Event> events) async {
-    final prefs = await SharedPreferences.getInstance();
-    final encodedEvents = jsonEncode(events.map((e) => e.toJson()).toList());
-    await prefs.setString('events', encodedEvents);
-  }
-
-  // Function to load events from SharedPreferences
-  Future<List<Event>> loadEvents() async {
-    final prefs = await SharedPreferences.getInstance();
-    final encodedEvents = prefs.getString('events');
-    if (encodedEvents == null) {
-      return [];
-    }
-    try {
-      final decodedEvents = jsonDecode(encodedEvents) as List;
-      return decodedEvents.map((e) => Event.fromJson(e)).toList();
-    } on FormatException {
-      print("Error decoding stored events. Starting with an empty list.");
-      return [];
-    }
-  }
-
-  void showEventsByDate(DateTime date, List<Event> events) {
-    final matchingEvents = events
-        .where((event) =>
-            event.date.year == date.year &&
-            event.date.month == date.month &&
-            event.date.day == date.day)
-        .toList();
-    print("Events on ${date.toString()}:");
-    for (var event in matchingEvents) {
-      print("- ${event.title}");
-      if (event.description != null) {
-        print("  Description: ${event.description}");
-      }
-    }
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Memorable Events',
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+      ),
+      home: MemorableEventsPage(),
+    );
   }
 }
 
-Future<void> main() async {
-  final events = <Event>[]; // Initialize events list
+class MemorableEventsPage extends StatefulWidget {
+  @override
+  _MemorableEventsPageState createState() => _MemorableEventsPageState();
+}
 
-  EventManager eventManager = EventManager();
+class _MemorableEventsPageState extends State<MemorableEventsPage> {
+  final TextEditingController _eventNameController = TextEditingController();
+  final TextEditingController _eventDescriptionController =
+      TextEditingController();
 
-  // Load events from SharedPreferences
-  final loadedEvents = await eventManager.loadEvents();
+  List<String> events = [];
+  final FlutterSecureStorage secureStorage = FlutterSecureStorage();
 
-  events.addAll(loadedEvents);
+  @override
+  void initState() {
+    super.initState();
+    _loadEvents();
+  }
 
-  // Function to get user input for a new event
+  Future<void> _loadEvents() async {
+    String storedEvents = await secureStorage.read(key: 'events') ??'';
+    if (storedEvents != null && storedEvents.isNotEmpty) {
+      setState(() {
+        events = storedEvents.split(',');
+      });
+    }
+  }
 
-  // Get user input for a new event with error handling for invalid date
-  final newEvent = eventManager.getUserEvent();
-  events.add(newEvent);
+  Future<void> _saveEvent() async {
+    String eventName = _eventNameController.text.trim();
+    String eventDescription = _eventDescriptionController.text.trim();
 
-  // Save events back to SharedPreferences
-  await eventManager.saveEvents(events);
+    if (eventName.isNotEmpty && eventDescription.isNotEmpty) {
+      events.add('$eventName - $eventDescription');
+      await secureStorage.write(key: 'events', value: events.join(','));
+      setState(() {
+        _eventNameController.clear();
+        _eventDescriptionController.clear();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Memorable Events'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            TextField(
+              controller: _eventNameController,
+              decoration: InputDecoration(
+                labelText: 'Event Name',
+              ),
+            ),
+            SizedBox(height: 12.0),
+            TextField(
+              controller: _eventDescriptionController,
+              decoration: InputDecoration(
+                labelText: 'Event Description',
+              ),
+            ),
+            SizedBox(height: 12.0),
+            ElevatedButton(
+              onPressed: _saveEvent,
+              child: Text('Save Event'),
+            ),
+            SizedBox(height: 20.0),
+            Text(
+              'Memorable Events:',
+              style: TextStyle(fontSize: 18.0, fontWeight: FontWeight.bold),
+            ),
+            Expanded(
+              child: ListView.builder(
+                itemCount: events.length,
+                itemBuilder: (context, index) {
+                  return ListTile(
+                    title: Text(events[index]),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
