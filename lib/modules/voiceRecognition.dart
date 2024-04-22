@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
-import 'dart:async';
+import 'dart:async' show Future;
 import 'dart:isolate';
 
 class SpeechRecognition {
