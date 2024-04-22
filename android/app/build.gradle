@@ -58,7 +58,13 @@ flutter {
     source '../..'
 }
 
+<<<<<<< HEAD
 dependencies {
      implementation platform('com.google.firebase:firebase-bom:32.8.1')
     }
 
+=======
+ext {
+    kotlin_version = '1.9.20'
+}
+>>>>>>> ee003b6f1e22e659962aee6f1f8c4203f9e68d67

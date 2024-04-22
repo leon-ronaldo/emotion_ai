@@ -8,8 +8,6 @@ import '../controllers/home_controller.dart';
 class HomeView extends GetView<HomeController> {
   const HomeView({Key? key}) : super(key: key);
 
-  
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,10 +44,13 @@ class HomeView extends GetView<HomeController> {
                               controller: controller.requestFieldController,
                               onSubmitted: (text) async {
                                 controller.responseText.value = await controller
-                                    .conversationGenerator.geminiAPI
+                                    .speechRecognitionService
+                                    .conversationGenerator
+                                    .geminiAPI
                                     .getResponse(text);
 
-                                await controller.conversationGenerator.speechEngine
+                                await controller.speechRecognitionService
+                                    .conversationGenerator.speechEngine
                                     .speak(controller.responseText.value);
                               },
                               decoration: const InputDecoration(
@@ -69,7 +70,7 @@ class HomeView extends GetView<HomeController> {
                                     const Text('Fetching response...'),
                                   ],
                                 )
-                              : Text(controller.conversationGenerator.speechRecognition.result.value),
+                              : Text(controller.responseText.value),
                         ],
                       ),
                     ),

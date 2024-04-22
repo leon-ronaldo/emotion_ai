@@ -5,10 +5,17 @@ import 'package:get/get.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:speech_to_text/speech_recognition_error.dart';
 import 'package:speech_to_text/speech_recognition_result.dart';
+import 'dart:async';
+import 'dart:isolate';
 
 class SpeechRecognition {
   late SpeechToText speechRecognitionEngine;
   late ConversationGenerator conversationGenerator;
+
+  Isolate? recognitionIsolate;
+  Isolate? keywordIsolate;
+  ReceivePort? recognitionReceivePort;
+  ReceivePort? keywordReceivePort;
 
   bool speechEnabled = false;
   bool speechAvailable = false;
@@ -43,20 +50,35 @@ class SpeechRecognition {
     isReady = true;
   }
 
-  void onSpeechResult(SpeechRecognitionResult recognitionResult) {
+  void onSpeechResult(SpeechRecognitionResult recognitionResult) async {
     print(recognitionResult.recognizedWords);
-    conversationGenerator.detectSpeechContext();
-    result.value = 'user${recognitionResult.recognizedWords}';
+    result.value = 'user : ${recognitionResult.recognizedWords}';
+    await conversationGenerator
+        .detectSpeechContext(recognitionResult.recognizedWords);
   }
 
   Future startListening() async {
     await stopListening();
-    await Future.delayed(const Duration(milliseconds: 50));
+    await Future.delayed(const Duration(seconds: 2));
     await speechRecognitionEngine.listen(
       onResult: onSpeechResult,
-      listenOptions: SpeechListenOptions(listenMode: ListenMode.dictation),
+      listenFor: const Duration(seconds: 60),
+      pauseFor: const Duration(seconds: 5),
+      listenOptions: SpeechListenOptions(sampleRate: 16000),
     );
     speechEnabled = true;
+  }
+
+  Future startListeningForQuestion() async {
+    String result = "";
+    await speechRecognitionEngine.listen(
+      onResult: (recognitionResult) =>
+          result = recognitionResult.recognizedWords,
+      listenFor: const Duration(seconds: 60),
+      pauseFor: const Duration(seconds: 5),
+      listenOptions: SpeechListenOptions(sampleRate: 16000),
+    );
+    return result;
   }
 
   Future stopListening() async {
